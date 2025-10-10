@@ -1,27 +1,17 @@
-import pkg from '@slack/bolt';
+import { WebClient } from "@slack/web-api";
 import dotenv from "dotenv";
-const { App, ExpressReceiver } = pkg;
 dotenv.config();
 
-const receiver = new ExpressReceiver({
-    signingSecret: process.env.SLACK_BOT_TOKEN,
-});
-
-const app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    receiver,
-});
-
-app.event(/.*/, async ({ event }) => {
-    console.log("received event:", event.type);
-});
-
-app.event("app_mention", async ({ event, say }) => {
-    console.log("got mention event:", event);
-    await say(`woah i got pinged :3`);
-});
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 (async () => {
-    await app.start(process.env.PORT || 3000);
-    console.log("we are so on")
+    try {
+        await client.chat.postMessage({
+            channel: "#coding", // if you are not lynn, replace ts with a your slack channel lmfao
+            text: "sumsumsumsumsumsum",
+        });
+        console.log("sent message!");
+    } catch (err) {
+        console.error("something happened chat, we might be cooked:", err);
+    }
 })();
