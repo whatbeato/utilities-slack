@@ -10,7 +10,7 @@ const sentTransactions = new Set();
 async function getAccessToken() {
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2", {
         method: "POST",
-        headers { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             secret_id: process.env.GC_SECRET_ID,
             secret_key: process.env.GC_SECRET_KEY,
