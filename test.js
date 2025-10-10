@@ -29,4 +29,14 @@ async function createRequisition(accessToken) {
             reference: "slack-bot-test",
         }),
     });
+
+    const data = await res.json();
+    console.log("full requisition response:", data);
+    return data;
 }
+
+(async () => {
+    const token = await getAccessToken();
+    const requisiton = await createRequisition(token);
+    console.log(requisiton.link)
+})
