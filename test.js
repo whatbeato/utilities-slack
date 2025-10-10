@@ -23,7 +23,7 @@ async function createRequisition() {
 
     const token = await getAccessToken()
 
-    const institutionID = "SANDBOXFINANCE_SFIN0000"
+    const institutionID = "REVOLUT_REVOLT21"
 
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
         method: "POST",
