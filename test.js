@@ -2,7 +2,7 @@ import dotenv from "dotenv"
 import fetch from "node-fetch"
 dotenv.config()
 
-const TOKEN = process.env.GOCARDLESS_TOKEN
+const TOKEN = process.env.GC_SECRET_KEY
 const REDIRECT_URI = process.env.REDERECT_URI
 
 async function createRequisition() {
@@ -20,6 +20,9 @@ async function createRequisition() {
             reference: "lynn-accountant"
         })
     })
+
+    const text = await res.text()
+    console.log("raw response:", text)
 
     const data = await res.json()
     console.log("requisition made!")
