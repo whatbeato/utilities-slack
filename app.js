@@ -66,3 +66,9 @@ async function getTransactions(accountId, accessToken) {
     return (data.transactions.booked || []).concat(data.transactions.pending || []);
 }
 
+async function sendTransactionToSlack(tx) {
+    const amount = parseFloat(tx.transactionAmount);
+    const currency = tx.transactionAmount.currency;
+
+    
+}
