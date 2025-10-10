@@ -14,7 +14,7 @@ async function createRequisition() {
             "Authorization": `Bearer ${TOKEN}`,
             "Content-Type": "application/json",
         },
-        body: JSON.strignify({
+        body: JSON.stringify({
             redirect: REDIRECT_URI,
             institution_id: "SANDBOXFINANCE_SFIN0000",
             reference: "lynn-accountant"
