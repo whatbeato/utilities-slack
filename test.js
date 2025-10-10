@@ -23,7 +23,9 @@ async function createRequisition() {
 
     const token = await getAccessToken()
 
-    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions", {
+    const institutionID = "SANDBOXFINANCE_SFIN0000"
+
+    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,
@@ -31,16 +33,17 @@ async function createRequisition() {
         },
         body: JSON.stringify({
             redirect: REDIRECT_URI,
-            institution_id: "SANDBOXFINANCE_SFIN0000",
-            reference: "lynn-accountant"
+            institution_id: institutionID,
+            reference: Math.floor(Math.random() * 100),
+            user_language: "EN"
         })
     })
 
     const data = await res.json()
+    console.log("Raw response:", data)
 
-    const connectLink = `https://ob.gocardless.com/connect?requisition_id=${data.id}`
     console.log("requisition made!")
-    console.log(connectLink)
+    console.log(data.link)
 }
 
 createRequisition().catch(console.error)

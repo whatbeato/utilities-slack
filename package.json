@@ -6,6 +6,7 @@
     "fetch": "^1.1.0",
     "json-stringify": "^1.0.0",
     "node-fetch": "^3.3.2",
+    "nordigen-bank-ui": "^1.5.3",
     "stringify": "^5.2.0"
   }
 }
