@@ -52,4 +52,17 @@ async function getAccounts(requisitionId, accessToken) {
     return data.accounts || [];    
 }
 
-async 
+async function getTransactions(accountId, accessToken) {
+    const res = await fetch (
+        `https://bankaccountdata.gocardless.com/api/v2/accounts/${accountId}/transactions/`,
+        {
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+    const data = await res.json();
+    return (data.transactions.booked || []).concat(data.transactions.pending || []);
+}
+
