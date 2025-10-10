@@ -4,6 +4,8 @@
     "@slack/bolt": "^4.5.0",
     "dotenv": "^17.2.3",
     "fetch": "^1.1.0",
-    "node-fetch": "^3.3.2"
+    "json-stringify": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "stringify": "^5.2.0"
   }
 }
