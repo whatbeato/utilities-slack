@@ -42,7 +42,9 @@ async function createRequisition() {
         })
     });
     const data = await res.json();
-    return data.access;
+    console.log("debug, raw response:", data)
+
+    return data.link
 }
 
 async function getAccounts(requisitionId, accessToken) {
