@@ -4,11 +4,12 @@ import fetch from "node-fetch"
 dotenv.config();
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+const REDIRECT_URI = process.env.REDERECT_URI
 
 const sentTransactions = new Set();
 
 async function getAccessToken() {
-    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2", {
+    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -35,7 +36,7 @@ async function createRequisition() {
         },
         body: JSON.stringify({
             redirect: REDIRECT_URI,
-            insitution_id: insitutionID,
+            institution_id: institutionID,
             reference: Math.floor(Math.random() * 100),
             user_language: "EN"
         })
@@ -109,7 +110,7 @@ async function pollTransactions(accountIds, accessToken) {
 (async () => {
     const accessToken = await getAccessToken();
     const requisitionId = process.env.REQUISITION_ID;
-    const acounts = await getAccounts(requisitionId, accessToken);
+    const accounts = await getAccounts(requisitionId, accessToken);
 
     if (!accounts.length) {
         console.log("we got no accounts linked yet :c");
@@ -118,4 +119,4 @@ async function pollTransactions(accountIds, accessToken) {
 
     console.log("polling accounts:", accounts);
     pollTransactions(accounts, accessToken);
-})
+})();
