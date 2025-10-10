@@ -70,5 +70,52 @@ async function sendTransactionToSlack(tx) {
     const amount = parseFloat(tx.transactionAmount);
     const currency = tx.transactionAmount.currency;
 
-    
+    const isOutgoing = amount < 0;
+    const emoji = isOutgoing ? ":money_with_wings:" : ":money-printer:"
+    const direction = isOutgoing ? "spent" : "received";
+
+    const name = tx.debtorName || tx.remittanceInformationUnstructured || "Unknown";
+
+    const text = `Lynn just ${emoji} ${direction} at/from ${name} and it cost her ${Math.abs(amount)} ${currency}`; // change the name if you finna use this too
+
+    try {
+        await client.chat.postMessage({channel: "#coding", text});
+        sentTransactions.add(tx.transactionId);
+        console.log("sent transaction to slack:", tx.transactionId);
+    } catch(err) {
+        console.error["error sending transaction :waa: - ", err];
+    }
 }
+
+// ts is the rate limiter 5000, gocardless is so banning me chat
+
+async function pollTransactions(accountIds, accessToken) {
+    setInterval(async () => {
+        for (const accountId of accountIds) {
+            try {
+                const transactions = await getTransactions(accountId, accessToken);
+                for (const tx of transactions) {
+                    if (!sentTransactions.has(tx.transactionId)) {
+                        await sendTransactionToSlack(tx);
+                    }
+                }
+            } catch (err) {
+                console.error("we might be cooked, error fetching tx:", err);
+            }
+        }
+    }, 5000);
+}
+
+(async () => {
+    const accessToken = await getAccessToken();
+    const requisitionId = process.env.REQUISITION_ID;
+    const acounts = await getAccounts(requisitionId, accessToken);
+
+    if (!accounts.length) {
+        console.log("we got no accounts linked yet :c");
+        return;
+    }
+
+    console.log("polling accounts:", accounts);
+    pollTransactions(accounts, accessToken);
+})
