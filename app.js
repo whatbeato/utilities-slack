@@ -19,11 +19,12 @@ async function createRequisition() {
 
     const institutionID = "REVOLUT_REVOLT21" // change this to another bank if you use something else then revolut... i don't promise it'll work tho
     
-    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
+    const res = await fetch("https://api.enablebanking.com/requisitons/", {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json", 
+            "Content-Type": "application/json",
+            "x-enablebanking-client-type": "online", 
         },
         body: JSON.stringify({
             redirect: REDIRECT_URI,
@@ -39,8 +40,11 @@ async function createRequisition() {
 }
 
 async function getAccounts(requisitionId, accessToken) {
-    const res = await fetch(`https://bankaccountdata.gocardless.com/api/v2/requisitions/${requisitionId}`, {
-        headers: { "Authorization": `Bearer ${accessToken}` },
+    const res = await fetch(`https://api.enablebanking.com/v2/requisitons/${requisitionId}`, {
+        headers: { 
+            "Authorization": `Bearer ${accessToken}`,
+            "x-enablebanking-client-type": "online",
+        },
     });
     const data = await res.json();
     return data.accounts || [];    
@@ -53,23 +57,23 @@ async function safeFetch(url, options = {}) {
 
     if (now < nextAllowedTime) {
         const wait = nextAllowedTime - now;
-        console.log(`gocardless rate limit reached noooo, waiting ${wait / 1000}secs before trying again`)
+        console.log(`enablebanking rate limit reached noooo, waiting ${wait / 1000}secs before trying again`)
         await new Promise(res => setTimeout(res, wait));
     }
 
     const res = await fetch(url, options);
 
-    const limit = res.headers.get("x-ratelimit-account-success-limit");
-    const reset = res.headers.get("x-ratelimit-account-success-reset");
+    const limit = res.headers.get("x-ratelimit-account-limit");
+    const reset = res.headers.get("x-ratelimit-account-reset");
 
     if (reset) {
         nextAllowedTime = parseInt(reset) * 1000;
-        console.log(`we're allowed to poke gocardless again in: ${new Date(nextAllowedTime).toLocaleTimeString}`);
+        console.log(`we're allowed to poke enablebanking again in: ${new Date(nextAllowedTime).toLocaleTimeString}`);
 
     }
 
     if(!res.ok) {
-        console.error(`failed to poke gocardless (${res.status})`);
+        console.error(`failed to poke enablebanking (${res.status})`);
         throw new Error(await res.text());
     }
 
@@ -78,11 +82,12 @@ async function safeFetch(url, options = {}) {
 
 async function getTransactions(accountId, accessToken) {
     const res = await safeFetch (
-        `https://bankaccountdata.gocardless.com/api/v2/accounts/${accountId}/transactions/`,
+        `https://api.enablebanking.com/v2/accounts/${accountId}/transactions/`,
         {
             headers: {
                 "Authorization": `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
+                "x-enablebanking-client-type": "online",
             },
         }
     );
@@ -94,11 +99,11 @@ async function sendTransactionToSlack(tx) {
     const amount = parseFloat(tx.transactionAmount.amount);
     const currency = tx.transactionAmount.currency;
 
-    const isOutgoing = amount < 0;
-    const emoji = isOutgoing ? ":money_with_wings:" : ":money-printer:"
+    const isOutgoing = tx.credit_debit_indicatior === "DBIT";
+    const emoji = isOutgoing ? ":money_with_wings:" : ":money-printer:";
     const direction = isOutgoing ? "spent" : "received";
 
-    const name = tx.debtorName || tx.remittanceInformationUnstructured || "Unknown";
+    const name = tx.merchant_name || tx.debtor?.name || tx.creditor?.name || tx.remittance_information?.[1] || "Unknown";
 
     const text = `Lynn just ${emoji} ${direction} at/from ${name} and it cost her ${Math.abs(amount)} ${currency}`; // change the name if you finna use this too
 
@@ -135,6 +140,7 @@ async function pollTransactions(accountIds, accessToken) {
     const accounts = await getAccounts(requisitionId, accessToken);
 
     if (!accounts.length) {
+        createRequisition()
         console.log("we got no accounts linked yet :c");
         return;
     }
