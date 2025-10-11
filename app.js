@@ -9,16 +9,7 @@ const REDIRECT_URI = process.env.REDERECT_URI
 const sentTransactions = new Set();
 
 async function getAccessToken() {
-    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            secret_id: process.env.GC_SECRET_ID,
-            secret_key: process.env.GC_SECRET_KEY,
-        })
-    })
-    const data = await res.json()
-    return data.access
+    return process.env.ENABLE_API_KEY
 }
 
 async function createRequisition() {
@@ -37,8 +28,8 @@ async function createRequisition() {
         body: JSON.stringify({
             redirect: REDIRECT_URI,
             institution_id: institutionID,
-            reference: Math.floor(Math.random() * 100),
-            user_language: "EN"
+            reference: "Reference01i2",
+            user_language: "EN",
         })
     });
     const data = await res.json();
@@ -55,8 +46,38 @@ async function getAccounts(requisitionId, accessToken) {
     return data.accounts || [];    
 }
 
+let nextAllowedTime = 0;
+
+async function safeFetch(url, options = {}) {
+    const now = Date.now();
+
+    if (now < nextAllowedTime) {
+        const wait = nextAllowedTime - now;
+        console.log(`gocardless rate limit reached noooo, waiting ${wait / 1000}secs before trying again`)
+        await new Promise(res => setTimeout(res, wait));
+    }
+
+    const res = await fetch(url, options);
+
+    const limit = res.headers.get("x-ratelimit-account-success-limit");
+    const reset = res.headers.get("x-ratelimit-account-success-reset");
+
+    if (reset) {
+        nextAllowedTime = parseInt(reset) * 1000;
+        console.log(`we're allowed to poke gocardless again in: ${new Date(nextAllowedTime).toLocaleTimeString}`);
+
+    }
+
+    if(!res.ok) {
+        console.error(`failed to poke gocardless (${res.status})`);
+        throw new Error(await res.text());
+    }
+
+    return res;
+}
+
 async function getTransactions(accountId, accessToken) {
-    const res = await fetch (
+    const res = await safeFetch (
         `https://bankaccountdata.gocardless.com/api/v2/accounts/${accountId}/transactions/`,
         {
             headers: {
@@ -70,7 +91,7 @@ async function getTransactions(accountId, accessToken) {
 }
 
 async function sendTransactionToSlack(tx) {
-    const amount = parseFloat(tx.transactionAmount);
+    const amount = parseFloat(tx.transactionAmount.amount);
     const currency = tx.transactionAmount.currency;
 
     const isOutgoing = amount < 0;
@@ -90,7 +111,6 @@ async function sendTransactionToSlack(tx) {
     }
 }
 
-// ts is the rate limiter 5000, gocardless is so banning me chat
 
 async function pollTransactions(accountIds, accessToken) {
     setInterval(async () => {
