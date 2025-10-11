@@ -27,10 +27,10 @@ async function createRequisition() {
             "x-enablebanking-client-type": "online", 
         },
         body: JSON.stringify({
-            "redirect_uri": REDIRECT_URI,
-            "institution_id": institutionID,
-            "reference": "Reference01i2",
-            "user_language": "EN",
+            access: "transactions",
+            redirect_url: REDIRECT_URI,
+            aspsp: institutionID,
+            state: "linked",
         })
     });
     const data = await res.json();
