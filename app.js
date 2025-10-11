@@ -19,7 +19,7 @@ async function createRequisition() {
 
     const institutionID = "REVOLUT_REVOLT21" // change this to another bank if you use something else then revolut... i don't promise it'll work tho
     
-    const res = await fetch("https://api.enablebanking.com/requisitons/", {
+    const res = await fetch("https://api.enablebanking.com/auth", {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,
@@ -27,10 +27,10 @@ async function createRequisition() {
             "x-enablebanking-client-type": "online", 
         },
         body: JSON.stringify({
-            redirect: REDIRECT_URI,
-            institution_id: institutionID,
-            reference: "Reference01i2",
-            user_language: "EN",
+            "redirect_uri": REDIRECT_URI,
+            "institution_id": institutionID,
+            "reference": "Reference01i2",
+            "user_language": "EN",
         })
     });
     const data = await res.json();
