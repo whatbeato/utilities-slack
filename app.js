@@ -13,3 +13,17 @@ const {
     SLACK_CHANNEL,
     TIMEZONE,
 } = process.env;
+
+// get access token to do api requests to gocardless, ts pmo
+async function getAccessToken() {
+    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+        body: JSON.stringify({
+            secret_id: GC_SECRET_ID,
+            secret_key: GC_SECRET_KEY
+        }),
+    });
+    const data = await res.json();
+    return data.access;
+}
