@@ -151,3 +151,28 @@ ${breakdown || "no categorized spending today!"}`;
     await sendSummaryToSlack(summaryText);
     console.log("the silly got the daily spending habits!")
 }
+
+(async () => {
+    const accessToken = await getAccessToken();
+    let requisitonId = REQUISITION_ID;
+
+    if (!requisitionId) {
+        requisitionId = await createRequisition(accessToken);
+        console.log(`after using the requistion link, save it to the .env as REQUISITION_ID=${requisitonId}`);
+        return;
+    }
+
+    const accounts = await getAccounts(requisitionId, accessToken);
+    if (!accounts.length) {
+        console.log("no accounts linked yet :c");
+        return;
+    }
+
+    console.log("polling accounts", accounts);
+
+    cron.schedule("0 22 * * *", () => summarizeDay(accounts, accessToken), {
+        timezone: TIMEZONE,
+    });
+
+    await summarizeDay(accounts, accessToken); // COMMENT IF YOU ARE NOT TESTING.
+})
