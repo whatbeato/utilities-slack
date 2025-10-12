@@ -56,3 +56,12 @@ async function createRequisition(accessToken) {
     console.log("requisition created succesfully:", data.link);
     return data.id;
 }
+
+const categories = [
+    { name: "food", keywords ["restaurant", "uber eats", "glovo", "mcdonald", "burger", "pizza", "food", "cafe", "café", "subway", "taco bell"] },
+    { name: "transportation", keywords: ["uber", "bolt", "train", "metro", "bus", "carris", "navegante", "carris metropolitana", "fertagus", "TST", "CP", "comboios de portugal", "autocarro", "gas", "fuel"] },
+    { name: "subscription", keywords: ["apple", "google play", "discord", "subscription"] },
+    { name: "entertainment", keywords: ["game", "tetrio", "tetr.io", "cinema", "movies", "music"]},
+    { name: "other", keywords: [] }
+];
+
