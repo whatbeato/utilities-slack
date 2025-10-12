@@ -5,6 +5,7 @@
     "dotenv": "^17.2.3",
     "fetch": "^1.1.0",
     "json-stringify": "^1.0.0",
+    "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "nordigen-bank-ui": "^1.5.3",
     "stringify": "^5.2.0"

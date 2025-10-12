@@ -18,7 +18,7 @@ const {
 async function getAccessToken() {
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new", {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             secret_id: GC_SECRET_ID,
             secret_key: GC_SECRET_KEY
@@ -58,14 +58,14 @@ async function createRequisition(accessToken) {
 }
 
 const categories = [
-    { name: "food", keywords ["restaurant", "uber eats", "glovo", "mcdonald", "burger", "pizza", "food", "cafe", "café", "subway", "taco bell"] },
+    { name: "food", keywords: ["restaurant", "uber eats", "glovo", "mcdonald", "burger", "pizza", "food", "cafe", "café", "subway", "taco bell"] },
     { name: "transportation", keywords: ["uber", "bolt", "train", "metro", "bus", "carris", "navegante", "carris metropolitana", "fertagus", "TST", "CP", "comboios de portugal", "autocarro", "gas", "fuel"] },
     { name: "subscription", keywords: ["apple", "google play", "discord", "subscription"] },
     { name: "entertainment", keywords: ["game", "tetrio", "tetr.io", "cinema", "movies", "music"] },
     { name: "other", keywords: [] },
 ];
 
-function categorize(descriptions) {
+function categorize(description) {
     const text = (description || "").toLowerCase();
     for (const cat of categories) {
         if (cat.keywords.some((k) => text.includes(k))) return cat.name;
@@ -97,6 +97,8 @@ async function fetchTodaysTransactions(accountId, accessToken) {
         return (data.transactions.booked || []).concat(data.transactions.pending || []);
 }
 
+
+
 async function sendSummaryToSlack(summaryText) {
     await client.chat.postMessage({
         channel: SLACK_CHANNEL,
@@ -105,11 +107,11 @@ async function sendSummaryToSlack(summaryText) {
 }
 
 async function summarizeDay(accountIds, accessToken) {
-    console.log("fetching daily..."):
+    console.log("fetching daily...");
 
     let allTx = [];
     for (const acc of accountIds) {
-        consst txs = await fetchTodaysTransactions(acc, accessToken);
+        const txs = await fetchTodaysTransactions(acc, accessToken);
         allTx = allTx.concat(txs);
     }
 
@@ -143,7 +145,7 @@ async function summarizeDay(accountIds, accessToken) {
     const summaryText = `*lynn's bad spending habits of the day*
 ${new Date().toLocaleDateString("en-GB")}
 today, lynn spent *€${totalSpent.toFixed(2)}*
-and received *€${ŧotalReceived.toFixed(2)}*
+and received *€${totalReceived.toFixed(2)}*
 
 breakdown of today's spending:
 ${breakdown || "no categorized spending today!"}`;
