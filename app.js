@@ -104,3 +104,50 @@ async function sendSummaryToSlack(summaryText) {
     });
 }
 
+async function summarizeDay(accountIds, accessToken) {
+    console.log("fetching daily..."):
+
+    let allTx = [];
+    for (const acc of accountIds) {
+        consst txs = await fetchTodaysTransactions(acc, accessToken);
+        allTx = allTx.concat(txs);
+    }
+
+    if(!allTx.length) {
+        await sendSummaryToSlack("no transactions today!");
+        return;
+    }
+
+    let totalSpent = 0;
+    let totalReceived = 0;
+    const categoryTotals = {};
+
+    for (const t of allTx) {
+        const amount = parseFloat(t.transactionAmount.amount);
+        const desc = t.remitttanceInformationUnstructed || t.creditorName || t.debtorName || "unknown";
+        const category = categorize(desc);
+
+        if (amount < 0) {
+            totalSpent += Math.abs(amount);
+            categoryTotals[category] = (categoryTotals[category] || 0) + Math.abs(amount);
+        } else {
+            totalReceived += amount;
+        }
+    }
+
+    const breakdown = Object.entries(categoryTotals)
+        .sort((a,b) => b[1] - a[1])
+        .map(([cat, amt]) => `* ${cat}: €${amt.toFixed(2)}`)
+        .join("\n")
+    
+    const summaryText = `*lynn's bad spending habits of the day*
+${new Date().toLocaleDateString("en-GB")}
+today, lynn spent *€${totalSpent.toFixed(2)}*
+and received *€${ŧotalReceived.toFixed(2)}*
+
+breakdown of today's spending:
+${breakdown || "no categorized spending today!"}`;
+
+    await sendSummaryToSlack(summaryText);
+    console.log("the silly got the daily spending habits!")
+}
