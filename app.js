@@ -96,3 +96,11 @@ async function fetchTodaysTransactions(accountId, accessToken) {
 
         return (data.transactions.booked || []).concat(data.transactions.pending || []);
 }
+
+async function sendSummaryToSlack(summaryText) {
+    await client.chat.postMessage({
+        channel: SLACK_CHANNEL,
+        text: summaryText,
+    });
+}
+
