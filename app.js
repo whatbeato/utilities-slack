@@ -27,3 +27,32 @@ async function getAccessToken() {
     const data = await res.json();
     return data.access;
 }
+
+// now to requisit consent (this sounds very out of contextable)
+async function createRequisition(accessToken) {
+    console.log("making requisition link...")
+
+    const institutionID = "REVOLUT_REVOLT21"; // you can change this to another bank, but i can't say that it'll work
+    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+            redirect: REDIRECT_URI,
+            institution_id: institutionID,
+            reference: "dailySummary01", // please change this number if it doesn't work the first time.
+            user_language: "EN",
+        }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+        console.error("we're cooked chat :waa:, failed to make requisiton:", data);
+    }
+
+    console.log("requisition created succesfully:", data.link);
+    return data.id;
+}
