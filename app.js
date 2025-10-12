@@ -61,7 +61,38 @@ const categories = [
     { name: "food", keywords ["restaurant", "uber eats", "glovo", "mcdonald", "burger", "pizza", "food", "cafe", "café", "subway", "taco bell"] },
     { name: "transportation", keywords: ["uber", "bolt", "train", "metro", "bus", "carris", "navegante", "carris metropolitana", "fertagus", "TST", "CP", "comboios de portugal", "autocarro", "gas", "fuel"] },
     { name: "subscription", keywords: ["apple", "google play", "discord", "subscription"] },
-    { name: "entertainment", keywords: ["game", "tetrio", "tetr.io", "cinema", "movies", "music"]},
-    { name: "other", keywords: [] }
+    { name: "entertainment", keywords: ["game", "tetrio", "tetr.io", "cinema", "movies", "music"] },
+    { name: "other", keywords: [] },
 ];
 
+function categorize(descriptions) {
+    const text = (description || "").toLowerCase();
+    for (const cat of categories) {
+        if (cat.keywords.some((k) => text.includes(k))) return cat.name;
+    }
+    return "other";
+}
+
+async function fetchTodaysTransactions(accountId, accessToken) {
+    const today = new Date();
+    const from = today.toISOString().split("T")[0];
+    const to = from;
+
+    const url = `https://bankaccountdata.gocardless.com/api/v2/accounts/${accountId}/transactions/?date_from=${from}&date_to=${to}`;
+
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+        }, 
+    });
+
+    const data = await res.json();
+
+    if (!data.transactions) {
+        console.error("no tx:", data);
+        return [];
+    }
+
+        return (data.transactions.booked || []).concat(data.transactions.pending || []);
+}
