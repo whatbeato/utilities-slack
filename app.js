@@ -97,7 +97,14 @@ async function fetchTodaysTransactions(accountId, accessToken) {
         return (data.transactions.booked || []).concat(data.transactions.pending || []);
 }
 
-
+async function getAccounts(requisitionId, accessToken) {
+    const res = await fetch(`https://bankaccountdata.gocardless.com/api/v2/requisitions`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+        }
+    })
+}
 
 async function sendSummaryToSlack(summaryText) {
     await client.chat.postMessage({
