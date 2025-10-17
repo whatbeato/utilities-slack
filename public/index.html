@@ -28,23 +28,35 @@
 
         <script>
             document.getElementById("loadBanks").addEventListener("click", async () => {
-                const country = document.getElementById("country".value);
+                const country = document.getElementById("country").value;
                 const res = await fetch(`/api/institutions?country=${country}`);
                 const data = await res.json();
-                const container = document. getElementById("banks");
+                const container = document.getElementById("banks");
 
                 container.innerHTML = "";
 
                 data.forEach(bank => {
                     const div = document.createElement("div");
                     div.className = "bank";
-                    div.InnerHTML = `<img src="${bank.logo}">
+                    div.innerHTML = `<img src="${bank.logo}">
                     <span>${bank.name}</span>
-                    <form method="POST" action="/select">
-                        <input type="hidden" name="institution" value="${bank.id}">
-                        <button class="select" type="submit">Select</button>
-                    </form>`;
+                    <button class="select" data-id="${bank.id}">Select</button>`;
+
                     container.appendChild(div);
+
+                    div.querySelector(".select").addEventListener("click", async () => {
+                        const resp = await fetch("/api/institutions", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                institution: bank.id
+                            })
+                        })
+                        const html = await resp.text();
+                        document.body.innerHTML = html;
+                    });
                 });
             });
         </script>

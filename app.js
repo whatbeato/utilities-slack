@@ -2,6 +2,7 @@ import { WebClient } from "@slack/web-api";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import cron from "node-cron";
+import express from "express";
 dotenv.config();
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -16,7 +17,8 @@ const {
 
 const app = express ();
 app.use(express.static("public"));
-app.use(express.urlenconded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // <-- added so JSON/form POST bodies are parsed
 
 let globalAccessToken;
 
@@ -38,6 +40,10 @@ async function getAccessToken() {
 // now to requisit consent (this sounds very out of contextable)
 async function createRequisition(accessToken, institutionID) {
     console.log("making requisition link...")
+    
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const reference = `lynvie_${timestamp}_${randomStr}`;
 
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
         method: "POST",
@@ -45,11 +51,10 @@ async function createRequisition(accessToken, institutionID) {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
             redirect: REDIRECT_URI,
             institution_id: institutionID,
-            reference: "lynvieTheAccountant", // please change this number if it doesn't work the first time.
+            reference: reference, 
             user_language: "EN",
         }),
     });
@@ -61,7 +66,10 @@ async function createRequisition(accessToken, institutionID) {
 
     console.log("data for debug:", data)
     console.log("requisition created succesfully:", data.link);
-    return data.id;
+    return {
+        id: data.id,
+        link: data.link
+    }
 }
 
 // fetch banks by countrycode
@@ -74,6 +82,7 @@ async function getInstitutions(countryCode, accessToken) {
         },
     });
     const data = await res.json();
+    return data;
 }
 
 const categories = [
@@ -190,40 +199,72 @@ ${breakdown || "no categorized spending today!"}`;
 }
 
 app.get("/api/institutions", async (req, res) => {
-    const institutionID = req.body.institution;
-    const data = await createRequisiton(globalAccessToken, institutionID);
-    if (data?.link) {
-        res.send(`
-            <h2>requisition made!</h2>
-            <p><strong>ID</strong>${data.id}</p>
-            <p><strong>you should copy the ID above and paste it in your .env for REQUISITION_ID</strong></p>
-            <p><a href="${data.link}" target="_blank">autorize account</a></p>
-            `);
-    } else {
-        res.send("failed to make the requisiton :c");
+    try {
+        const country = req.query.country;
+        if (!country) {
+            return res.status(400).json({ error: "missing country parameter" });
+        }
+        const institutions = await getInstitutions(country, globalAccessToken);
+        res.json(institutions);
+    } catch (err) {
+        console.error("Error fetching institutions:", err);
+        res.status(500).json({ error: "Failed to fetch institutions" });
+    }
+});
+
+app.post("/api/institutions", async (req, res) => { 
+    try {
+        const institutionID = req.body?.institution;
+        if (!institutionID) {
+            return res.status(400).send("missing institution in request body");
+        }
+        const data = await createRequisition(globalAccessToken, institutionID);
+        if (data?.link) {
+            res.send(`
+                <h2>requisition made!</h2>
+                <p><strong>ID</strong>${data.id}</p>
+                <p><strong>you should copy the ID above and paste it in your .env for REQUISITION_ID</strong></p>
+                <p><a href="${data.link}" target="_blank">autorize account</a></p>
+                `);
+        } else {
+            res.status(500).send("failed to make the requisition :c");
+        }
+    } catch (err) {
+        console.error("error in /api/institutions:", err);
+        res.status(500).send("internal error");
     }
 });
 
 (async () => {
     const accessToken = await getAccessToken();
-    let requisitionId = REQUISITION_ID;
+    globalAccessToken = accessToken; // <-- ensure route can use the token
 
-    if (!requisitionId) {
-        app.listen(3000,() => console.log("visit localhost:3000 to select your country and bank!"));
-        return;
-    }
+    // Start the server first so the web interface is available
+    app.listen(3000, () => console.log("visit localhost:3000 to select your country and bank!"));
 
-    const accounts = await getAccounts(requisitionId, accessToken);
-    if (!accounts.length) {
-        console.log("no accounts linked yet :c");
-        return;
-    }
+    // Set up account polling and cron job in the background
+    const setupAccountPolling = async () => {
+        let requisitionId = REQUISITION_ID;
 
-    console.log("polling accounts", accounts);
+        if (!requisitionId) {
+            console.log("no requisition id, you can request one at localhost:300.");
+            return;
+        }
 
-    cron.schedule("0 22 * * *", () => summarizeDay(accounts, accessToken), {
-        timezone: TIMEZONE,
-    });
+        const accounts = await getAccounts(requisitionId, accessToken);
+        if (!accounts.length) {
+            console.log("no accounts linked yet :c");
+            return;
+        }
 
+        console.log("polling accounts", accounts);
+
+        cron.schedule("0 22 * * *", () => summarizeDay(accounts, accessToken), {
+            timezone: TIMEZONE,
+        });
+    };
+
+    // Start account setup in background
+    setupAccountPolling().catch(err => console.error("Error setting up account polling:", err));
     // await summarizeDay(accounts, accessToken); // COMMENT IF YOU ARE NOT TESTING.
 })();
