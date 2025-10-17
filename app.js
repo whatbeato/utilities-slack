@@ -189,13 +189,27 @@ ${breakdown || "no categorized spending today!"}`;
     console.log("the silly got the daily spending habits!")
 }
 
+app.get("/api/institutions", async (req, res) => {
+    const institutionID = req.body.institution;
+    const data = await createRequisiton(globalAccessToken, institutionID);
+    if (data?.link) {
+        res.send(`
+            <h2>requisition made!</h2>
+            <p><strong>ID</strong>${data.id}</p>
+            <p><strong>you should copy the ID above and paste it in your .env for REQUISITION_ID</strong></p>
+            <p><a href="${data.link}" target="_blank">autorize account</a></p>
+            `);
+    } else {
+        res.send("failed to make the requisiton :c");
+    }
+});
+
 (async () => {
     const accessToken = await getAccessToken();
     let requisitionId = REQUISITION_ID;
 
     if (!requisitionId) {
-        requisitionId = await createRequisition(accessToken);
-        console.log(`after using the requisition link, save it to the .env as REQUISITION_ID=${requisitionId}`);
+        app.listen(3000,() => console.log("visit localhost:3000 to select your country and bank!"));
         return;
     }
 
