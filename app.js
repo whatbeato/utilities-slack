@@ -14,9 +14,15 @@ const {
     TIMEZONE,
 } = process.env;
 
+const app = express ();
+app.use(express.static("public"));
+app.use(express.urlenconded({ extended: true }));
+
+let globalAccessToken;
+
 // get access token to do api requests to gocardless, ts pmo
 async function getAccessToken() {
-    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new", {
+    const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/token/new/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -25,14 +31,14 @@ async function getAccessToken() {
         }),
     });
     const data = await res.json();
+    console.log("data for debug:", data)
     return data.access;
 }
 
 // now to requisit consent (this sounds very out of contextable)
-async function createRequisition(accessToken) {
+async function createRequisition(accessToken, institutionID) {
     console.log("making requisition link...")
 
-    const institutionID = "REVOLUT_REVOLT21"; // you can change this to another bank, but i can't say that it'll work
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
         method: "POST",
         headers: {
@@ -43,7 +49,7 @@ async function createRequisition(accessToken) {
         body: JSON.stringify({
             redirect: REDIRECT_URI,
             institution_id: institutionID,
-            reference: "dailySummary01", // please change this number if it doesn't work the first time.
+            reference: "lynvieTheAccountant", // please change this number if it doesn't work the first time.
             user_language: "EN",
         }),
     });
@@ -53,8 +59,21 @@ async function createRequisition(accessToken) {
         console.error("we're cooked chat :waa:, failed to make requisiton:", data);
     }
 
+    console.log("data for debug:", data)
     console.log("requisition created succesfully:", data.link);
     return data.id;
+}
+
+// fetch banks by countrycode
+async function getInstitutions(countryCode, accessToken) {
+    const url = `https://bankaccountdata.gocardless.com/api/v2/institutions/?country=${countryCode}`
+    const res = await fetch(url, {
+        headers : {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
+    });
+    const data = await res.json();
 }
 
 const categories = [
@@ -98,14 +117,23 @@ async function fetchTodaysTransactions(accountId, accessToken) {
 }
 
 async function getAccounts(requisitionId, accessToken) {
-    const res = await fetch(`https://bankaccountdata.gocardless.com/api/v2/requisitions`, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
+    const res = await fetch(
+        `https://bankaccountdata.gocardless.com/api/v2/requisitions/${requisitionId}/`,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
         }
-    })
-}
+    );
+const data = await res.json();
 
+if (!res.ok) {
+    console.error("failed to fetch accounts:", data);
+    return [];
+}
+return data.accounts || [];
+}
 async function sendSummaryToSlack(summaryText) {
     await client.chat.postMessage({
         channel: SLACK_CHANNEL,
@@ -133,7 +161,7 @@ async function summarizeDay(accountIds, accessToken) {
 
     for (const t of allTx) {
         const amount = parseFloat(t.transactionAmount.amount);
-        const desc = t.remitttanceInformationUnstructed || t.creditorName || t.debtorName || "unknown";
+        const desc = t.remittanceInformationUnstructured || t.creditorName || t.debtorName || "unknown";
         const category = categorize(desc);
 
         if (amount < 0) {
@@ -146,11 +174,11 @@ async function summarizeDay(accountIds, accessToken) {
 
     const breakdown = Object.entries(categoryTotals)
         .sort((a,b) => b[1] - a[1])
-        .map(([cat, amt]) => `* ${cat}: €${amt.toFixed(2)}`)
+        .map(([cat, amt]) => `- ${cat}: €${amt.toFixed(2)}`)
         .join("\n")
     
-    const summaryText = `*lynn's bad spending habits of the day*
-${new Date().toLocaleDateString("en-GB")}
+    const summaryText = `it's 22:00, which means we have to learn about...
+*lynn's bad spending habits of the day* (${new Date().toLocaleDateString("en-GB")})
 today, lynn spent *€${totalSpent.toFixed(2)}*
 and received *€${totalReceived.toFixed(2)}*
 
@@ -163,11 +191,11 @@ ${breakdown || "no categorized spending today!"}`;
 
 (async () => {
     const accessToken = await getAccessToken();
-    let requisitonId = REQUISITION_ID;
+    let requisitionId = REQUISITION_ID;
 
     if (!requisitionId) {
         requisitionId = await createRequisition(accessToken);
-        console.log(`after using the requistion link, save it to the .env as REQUISITION_ID=${requisitonId}`);
+        console.log(`after using the requisition link, save it to the .env as REQUISITION_ID=${requisitionId}`);
         return;
     }
 
@@ -183,5 +211,5 @@ ${breakdown || "no categorized spending today!"}`;
         timezone: TIMEZONE,
     });
 
-    await summarizeDay(accounts, accessToken); // COMMENT IF YOU ARE NOT TESTING.
-})
+    // await summarizeDay(accounts, accessToken); // COMMENT IF YOU ARE NOT TESTING.
+})();
