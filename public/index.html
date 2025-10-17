@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>Lyvie The Accountant</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fffef1;
+            font-family: monospace;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+    </style>
+    <body>
+        <h1>Select your country</h1>
+        <select id="country">
+            <option value="PT">Portugal (PT)</option>
+            <option value="GB">United Kingdom (GB)</option>
+            <option value="FR">France (FR)</option>
+            <option value="DE">Germany (DE)</option>
+            <option value="NL">Netherlands (NL)</option>
+            <option value="ES">Spain (ES)</option>
+        </select>
+        <button id="loadBanks">load banks</button>
+
+        <div class="banks" id="banks"></div>
+
+        <script>
+            document.getElementById("loadBanks").addEventListener("click", async () => {
+                const country = document.getElementById("country".value);
+                const res = await fetch(`/api/institutions?country=${country}`);
+                const data = await res.json();
+                const container = document. getElementById("banks");
+
+                container.innerHTML = "";
+
+                data.forEach(bank => {
+                    const div = document.createElement("div");
+                    div.className = "bank";
+                    div.InnerHTML = `<img src="${bank.logo}">
+                    <span>${bank.name}</span>
+                    <form method="POST" action="/select">
+                        <input type="hidden" name="institution" value="${bank.id}">
+                        <button class="select" type="submit">Select</button>
+                    </form>`;
+                    container.appendChild(div);
+                });
+            });
+        </script>
+    </body>
+</head>
