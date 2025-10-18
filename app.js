@@ -43,7 +43,7 @@ async function createRequisition(accessToken, institutionID) {
     
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const reference = `lynvie_${timestamp}_${randomStr}`;
+    const reference = `Vie_${timestamp}_${randomStr}`;
 
     const res = await fetch("https://bankaccountdata.gocardless.com/api/v2/requisitions/", {
         method: "POST",
@@ -247,7 +247,7 @@ app.post("/api/institutions", async (req, res) => {
         let requisitionId = REQUISITION_ID;
 
         if (!requisitionId) {
-            console.log("no requisition id, you can request one at localhost:300.");
+            console.log("no requisition id");
             return;
         }
 
