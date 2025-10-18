@@ -68,4 +68,6 @@ You can also add categories, by just adding an extra line, kinda like this:
     { name: "sillyness", keywords: ["hack club", "delta airlines", "new york", "athena :3"] },
 ```
 
+The name is what appears in the message sent, not something personal, so don't do anything I wouldn't do :meffo:
+
 
