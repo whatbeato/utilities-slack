@@ -3,7 +3,11 @@ Vie, The Accountant is a Slack bot made for [The Athena Award](https://athena.ha
 
 It links to your bank using GoCardless's Bank Account Data API. Most EU/UK banks are supported, but you can see if your bank is supported by going to https://bankaccountdata.gocardless.com/api/v2/institutions/?country=XX (replace the XX with your 2 letter country code).
 
+You can see a version of this running on #lynn-transactions, if you're curious about how this works!
+
 ## Setup guide
+
+Make a Slack bot by clicking [here](https://api.slack.com/apps/) and try and get a GoCardless key (there's no guide at the moment, it's kinda difficult so good luck!)
 
 Make a .env with all the fields in example.env, and fill out everything, like this:
 
