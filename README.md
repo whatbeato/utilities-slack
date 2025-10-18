@@ -70,4 +70,13 @@ You can also add categories, by just adding an extra line, kinda like this:
 
 The name is what appears in the message sent, not something personal, so don't do anything I wouldn't do :meffo:
 
+## A few notes before you go...
+
+This project was made for Athena, a Hack Club initiave to empower girls and non-binary people to make cool shit :3 - I recommend you check them out! https://athena.hackclub.com
+
+Thank you so much for using this script! I have not tested this thuroughly, so keep in mind you may spot some bugs here and there.
+
+Signed,
+whatbeato <3
+
 
