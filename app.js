@@ -186,8 +186,7 @@ async function summarizeDay(accountIds, accessToken) {
         .map(([cat, amt]) => `- ${cat}: €${amt.toFixed(2)}`)
         .join("\n")
     
-    const summaryText = `it's 22:00, which means we have to learn about...
-*lynn's bad spending habits of the day* (${new Date().toLocaleDateString("en-GB")})
+    const summaryText = `today's (${new Date().toLocaleDateString("en-GB")}) spending habits:
 today, lynn spent *€${totalSpent.toFixed(2)}*
 and received *€${totalReceived.toFixed(2)}*
 
