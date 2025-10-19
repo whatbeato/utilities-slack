@@ -80,7 +80,6 @@ This project was made for Athena, a Hack Club initiave to empower girls and non-
 
 Thank you so much for using this script! I have not tested this thuroughly, so keep in mind you may spot some bugs here and there.
 
-Signed,
-whatbeato <3
+Made with <3 and :3 by @whatbeato
 
 
